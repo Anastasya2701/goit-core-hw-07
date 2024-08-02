@@ -1,33 +1,31 @@
 from collections import UserDict
 from datetime import datetime, timedelta
 
-class Field: #Базовий клас для полів запису 
-       def __init__(self, value):
-            self.value = value
+class Field: #Базовий клас для полів запису
+    def __init__(self, value):
+        self.value = value
 
-       def __str__(self):
-            return str(self.value)
+    def __str__(self):
+        return str(self.value)
 
-class Name(Field):   #Клас для зберігання імені контакту. Обов'язкове поле.
-       def __init__(self, value):
-            self.value = value
-            super().__init__(value)		              
+class Name(Field): #Клас для зберігання імені контакту. Обов'язкове поле.
+    def __init__(self, value):
+        super().__init__(value)
 
 class Phone(Field): #Клас для зберігання номеру телефона. Має валідацію формату.
-	def __init__(self, phone):
-              if not phone.isdigit() or len(phone) != 10: # Лише 10 цифр
-                     raise ValueError("Номер телефону має складатись з 10 цифр.") # В іншому випадку помилка
-              super().__init__(phone)
+    def __init__(self, phone):
+        if not phone.isdigit() or len(phone) != 10:
+            raise ValueError("Номер телефону має складатись з 10 цифр.")
+        super().__init__(phone)
 
 class Birthday(Field):
     def __init__(self, value):
-            try:
-                self.value = datetime.strptime(value, "%d.%m.%Y").date()
-            except ValueError:
-                raise ValueError("Не правильний формат дати має бути ДД.ММ.РРРР.")
-       
-class AddressBook(UserDict): # Клас для зберігання всіх контатів
+        try:
+            self.value = datetime.strptime(value, "%d.%m.%Y").date()
+        except ValueError:
+            raise ValueError("Не правильний формат дати має бути ДД.ММ.РРРР.")
 
+class AddressBook(UserDict): # Клас для зберігання всіх контатів
     def add_record(self, record): # Метод додавання контакту
         self.data[record.name.value] = record
 
@@ -37,7 +35,6 @@ class AddressBook(UserDict): # Клас для зберігання всіх к�
     def string_to_date(self, date_string):
         return datetime.strptime(date_string, "%d.%m.%Y").date()
 
-
     def date_to_string(self, date):
         return date.strftime("%d.%m.%Y")
 
@@ -45,32 +42,26 @@ class AddressBook(UserDict): # Клас для зберігання всіх к�
         days_ahead = weekday - start_date.weekday()
         if days_ahead <= 0:
             days_ahead += 7
-            return start_date + timedelta(days=days_ahead)
-        elif birthday.weekday() >= 5:
-            return find_next_weekday(birthday, 0)
-        else:
-            return birthday
-
+        return start_date + timedelta(days_ahead)
 
     def get_upcoming_birthdays(self, days=7):
         upcoming_birthdays = []
         today = datetime.today().date()
 
         for contact in self.data.values():
-            birthday_date = self.string_to_date(contact.birthday.value)
-            birthday = birthday_date.replace(year=today.year)
-            birthday = self.adjust_for_weekend(birthday)
-            if birthday < today: 
-                birthday = birthday.replace(year=birthday.year + 1)
-                birthday = self.adjust_for_weekend(birthday)
-            delta_days = (birthday - today).days
-            if 0 <= delta_days <= days:    
-                congratulation_date_str = self.date_to_string(birthday)
-                upcoming_birthdays.append({"name": contact.name.value, "congratulation_date": congratulation_date_str})
-                
+            if contact.birthday:  # Перевірка наявності дати народження
+                birthday_date = contact.birthday.value
+                birthday = birthday_date.replace(year=today.year)
+                if birthday < today:
+                    birthday = birthday.replace(year=birthday.year + 1)
+                delta_days = (birthday - today).days
+                if 0 <= delta_days <= days:
+                    congratulation_date_str = self.date_to_string(birthday)
+                    upcoming_birthdays.append({"name": contact.name.value, "congratulation_date": congratulation_date_str})
+
         return upcoming_birthdays
-    
-    def delete(self,name): # Метод для видалення контакту
+
+    def delete(self, name): # Метод для видалення контакту
         del self[name]
 
     def __str__(self):
@@ -82,41 +73,41 @@ class Record: # Клас для зберігання інформації про
         self.birthday = None
         self.phones = []
 
-    def add_phone(self, phone): #додовання
+    def add_phone(self, phone): # додавання
         self.phones.append(Phone(phone))
 
     def edit_phone(self, old_phone, new_phone): # зміна
         for ind, number in enumerate(self.phones):
-            if number.value == old_phone: 
+            if number.value == old_phone:
                 self.phones[ind] = Phone(new_phone)
                 break
-            else:
-                raise ValueError
-            
-    def remove_phone(self, phone): # видалення
+        else:
+            raise ValueError
+
+    def remove_phone(self, phone): #видалення
         for number in self.phones:
             if number.value == phone:
                 self.phones.remove(number)
-                return 
-            raise ValueError
+                return
+        raise ValueError
 
-    def add_birthday(self, birthday):
+    def add_birthday(self, birthday): 
         self.birthday = birthday
 
-    def find_phone(self, phone:str) -> str: # пошук
+    def find_phone(self, phone: str) -> str: #пошук
         for number in self.phones:
             if number.value == phone:
                 return number
-            return None
-        
+        return None
+
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(number.value for number in self.phones)}"
 
 def input_error(func):
-    def inner(self, *args, **kwargs):
+    def inner(*args, **kwargs):
         try:
-            return func(self, *args, **kwargs)
-        except ValueError as e: 
+            return func(*args, **kwargs)
+        except ValueError as e:
             print(str(e))
         except AttributeError as e:
             print(str(e))
@@ -134,7 +125,7 @@ def get_greeting():
 def add_contact(args, book: AddressBook):
     name, phone = args
     record = book.find(name)
-    
+
     if record is None:
         record = Record(name)
         book.add_record(record)
@@ -143,7 +134,6 @@ def add_contact(args, book: AddressBook):
     else:
         record.add_phone(phone)
         return 'Contact updated'
-
 
 @input_error
 def change_contact(args, book: AddressBook):
@@ -154,19 +144,20 @@ def change_contact(args, book: AddressBook):
             record.edit_phone(old_phone, new_phone)
             return 'Contact updated'
         except ValueError:
-            raise ValueError('Numer contact not found')
+            raise ValueError('Number not found')
     else:
         raise ValueError('Contact not found')
-    
-@input_error    
-def show_phone(args, book: AddressBook):
-    number = args[0]
-    for contact in book:
-        found_phone = contact.find_phone(number)
-        if found_phone:
-            print(f"{contact.name}:{found_phone}")
 
-@input_error    
+@input_error
+def show_phone(args, book: AddressBook):
+    name = args[0]
+    record = book.find(name)
+    if record:
+        return f"{record.name.value}: {', '.join(phone.value for phone in record.phones)}"
+    else:
+        return f"Contact with name {name} not found."
+
+@input_error
 def show_all(book: AddressBook):
     if len(book.data) == 0:
         return "Contacts list is empty."
@@ -181,20 +172,20 @@ def add_birthday(args, book: AddressBook):
         record = Record(name)
         book.add_record(record)
 
-    record.add_birthday(birthday)
+    record.add_birthday(Birthday(birthday))
 
     return "Birthday added."
 
 @input_error
 def show_birthday(args, book: AddressBook):
     name = args[0]
-    record = book.find(name)        
+    record = book.find(name)
 
     if not record:
         return f"{name} doesn't exist."
     if not record.birthday:
         return f"{name} doesn't have birthday."
-    return record.birthday
+    return record.birthday.value
 
 def birthdays(book: AddressBook):
     upcoming_birthdays = book.get_upcoming_birthdays()
@@ -212,7 +203,7 @@ def main():
     while True:
         user_input = input("Enter a command: ")
         command, args = parse_input(user_input)
-        
+
         if command == "hello":
             print(get_greeting())
         elif command == "add":
