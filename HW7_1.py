@@ -43,6 +43,13 @@ class AddressBook(UserDict): # Клас для зберігання всіх к�
         if days_ahead <= 0:
             days_ahead += 7
         return start_date + timedelta(days_ahead)
+    
+    def adjust_for_weekday(self, date):
+        if date.weekday() == 5:
+            date += timedelta(days=2)
+        elif date.weekday() == 6:
+            date += timedelta(days=1)
+        return date
 
     def get_upcoming_birthdays(self, days=7):
         upcoming_birthdays = []
@@ -52,9 +59,11 @@ class AddressBook(UserDict): # Клас для зберігання всіх к�
             if contact.birthday:  # Перевірка наявності дати народження
                 birthday_date = contact.birthday.value
                 birthday = birthday_date.replace(year=today.year)
+                birthday = self.adjust_for_weekday(birthday)
                 if birthday < today:
                     birthday = birthday.replace(year=birthday.year + 1)
                 delta_days = (birthday - today).days
+                birthday = self.adjust_for_weekday(birthday)
                 if 0 <= delta_days <= days:
                     congratulation_date_str = self.date_to_string(birthday)
                     upcoming_birthdays.append({"name": contact.name.value, "congratulation_date": congratulation_date_str})
